@@ -1,0 +1,19 @@
+name: '🚀 Feature request'
+description: Suggest a feature that will improve project-cli
+labels: ['💡pending triage']
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: Describe the feature
+      description: 请描述您希望 project-cli 应该具备的功能
+    validations:
+      required: true
+  - type: checkboxes
+    id: PR
+    attributes:
+      label: Additional information
+      description: 我们还想了解更多的信息.
+      options:
+        - label: 您是否有提交 PR 的计划?
+        - label: 您是否急需使用此功能?

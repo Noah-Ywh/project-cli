@@ -1,0 +1,50 @@
+name: '🐛 Bug report'
+description: Create a report to help us improve project-cli
+labels: ['💡pending triage']
+body:
+  - type: textarea
+    id: bug-env
+    attributes:
+      label: Environment
+      description: 提供您的环境信息
+      value: |
+        - Node Version:
+    validations:
+      required: true
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: 请详细描述您遇到的问题
+      placeholder: Bug description
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: 预期效果
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: 实际效果
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: 请提供日志信息
+      render: shell-script
+  - type: checkboxes
+    id: PR
+    attributes:
+      label: Additional information
+      description: 我们还想了解更多的信息.
+      options:
+        - label: 您是否有提交 PR 的计划?
+        - label: 您是否急需修复此功能?
+  - type: textarea
+    id: comments
+    attributes:
+      label: Any additional comments
+      description: 您还想提供哪些信息？
