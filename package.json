@@ -1,6 +1,6 @@
 {
   "name": "@noahyu/project-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Command line interface (CLI) for quick project creation",
   "type": "module",
   "main": "./dist/bin/cli.js",
