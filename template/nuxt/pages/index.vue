@@ -1,9 +1,7 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="ys-home">
-    <NuxtLogo />
-  </div>
+  <NuxtLogo />
 </template>
 
 <style lang="scss" scoped></style>

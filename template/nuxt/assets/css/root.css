@@ -1,0 +1,64 @@
+:root {
+  --n-color-text-100: var(--gray-400);
+  --n-color-text-200: var(--gray-600);
+  --n-color-text-300: var(--gray-900);
+  --n-font-size: 14px;
+  --n-font-weight: 500;
+  --n-line-height: 1.5715;
+  --n-font-sans-serif: PingFang SC, Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+}
+
+html {
+  font: normal normal var(--n-font-weight) var(--n-font-size) / var(--n-line-height)
+    var(--n-font-sans-serif);
+}
+
+body {
+  color: var(--n-color-text-300);
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+li {
+  padding: 0;
+  margin: 0;
+}
+
+h1 {
+  font-size: 38px;
+  line-height: 44px;
+}
+h2 {
+  font-size: 30px;
+  line-height: 42px;
+}
+h3 {
+  font-size: 24px;
+  line-height: 28px;
+}
+h4 {
+  font-size: 20px;
+  line-height: 28px;
+}
+h5 {
+  font-size: 18px;
+  line-height: 24px;
+}
+h6 {
+  font-size: 14px;
+  line-height: 22px;
+}
+p {
+  font-size: 14px;
+  line-height: 20px;
+}
