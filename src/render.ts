@@ -101,7 +101,7 @@ export const generator = (options: Options): void => {
     const templateFilePath = join(templateDir, item)
 
     // 项目文件路径
-    const targetFilePaht = item.replace(/^_*/, '')
+    const targetFilePaht = item.replace(/^_?/, '')
 
     return { templateFilePath, targetFilePaht }
   })
