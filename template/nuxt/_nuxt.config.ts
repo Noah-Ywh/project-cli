@@ -1,7 +1,7 @@
 /* global defineNuxtConfig */
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import { createRobots, removeRobots } from './.scripts/create-robots'
-import { zhCN } from './.config/locale'
+import { createRobots, removeRobots } from './_scripts/create-robots'
+import { zhCN } from './_config/locale'
 export default defineNuxtConfig({
   app: {
     head: {
