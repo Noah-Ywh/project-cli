@@ -78,6 +78,14 @@ export default defineNuxtConfig({
   devServer: {
     port: 3000,
   },
+  vite: {
+    vueJsx: {
+      transformOn: true,
+      optimize: true,
+      mergeProps: true,
+      enableObjectSlots: true,
+    },
+  },
   experimental: {
     asyncContext: true,
   },
