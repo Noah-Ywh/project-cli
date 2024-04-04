@@ -34,7 +34,7 @@ export default defineNuxtConfig({
   css: ['primevue/resources/themes/lara-light-teal/theme.css'],
   modules: [
     [
-      '@spruce-hub/nuxt-fetch',
+      '@noahyu/nuxt-fetch',
       {
         '/api': {
           pathRewrite: {
@@ -47,7 +47,7 @@ export default defineNuxtConfig({
       },
     ],
     [
-      '@spruce-hub/nuxt-route',
+      '@noahyu/nuxt-route',
       {
         authPath: ['/account/'],
         loginPath: '/login',
