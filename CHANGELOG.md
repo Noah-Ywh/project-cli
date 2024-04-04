@@ -1,3 +1,13 @@
+# [1.1.0](https://github.com/Noah-Ywh/project-cli/compare/v1.0.2...v1.1.0) (2024-4-4)
+
+### ✨Features
+
+- **template:** update template ([f80db1b](https://github.com/Noah-Ywh/project-cli/commit/f80db1bd0ee12f9b73acfb55859c07980aafc570))
+
+### 🛠️Chore
+
+- update deps ([64b4f21](https://github.com/Noah-Ywh/project-cli/commit/64b4f2109c98d602988c5f533b6d2ac59330075b))
+
 ## [1.0.2](https://github.com/Noah-Ywh/project-cli/compare/v1.0.1...v1.0.2) (2023-11-28)
 
 ### 🐛Bug Fixes
