@@ -20,8 +20,8 @@
     "pnpm": ">=8.0.0"
   },
   "dependencies": {
-    "@spruce-hub/nuxt-fetch": "^1.11.1",
-    "@spruce-hub/nuxt-route": "^1.11.1",
+    "@noahyu/nuxt-fetch": "^1.0.0",
+    "@noahyu/nuxt-route": "^1.0.0",
     "node-fetch-native": "^1.6.4",
     "nuxt": "^3.11.1",
     "nuxt-primevue": "^0.3.1",
