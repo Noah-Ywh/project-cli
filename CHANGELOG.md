@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/Noah-Ywh/project-cli/compare/v1.1.0...v1.2.0) (2024-4-4)
+
+### ✨Features
+
+- **template:** 更新 eslint 依赖，适配 tsx ([24c5e00](https://github.com/Noah-Ywh/project-cli/commit/24c5e00a216bcf90d8c4e572abade4b6b9c42898))
+- **template:** nuxt 开启 tsx 支持 ([3ed0bc6](https://github.com/Noah-Ywh/project-cli/commit/3ed0bc6369b2aac724e74cf0c244c6a04bdf5a7d))
+- **template:** nuxt 模版新增 `@noahyu/nuxt-fetch` `@noahyu/nuxt-route` ([3ede78f](https://github.com/Noah-Ywh/project-cli/commit/3ede78ffa401e44dc05f6fd93d74639b8c1267f9))
+
+### 🐛Bug Fixes
+
+- **template:** 修复 nuxt 配置模块配置错误 ([f704704](https://github.com/Noah-Ywh/project-cli/commit/f7047046c611aa4084a583105a390ae4e1111429))
+
 # [1.1.0](https://github.com/Noah-Ywh/project-cli/compare/v1.0.2...v1.1.0) (2024-4-4)
 
 ### ✨Features
