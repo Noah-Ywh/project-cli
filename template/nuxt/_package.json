@@ -22,23 +22,23 @@
   "dependencies": {
     "@spruce-hub/nuxt-fetch": "^1.11.1",
     "@spruce-hub/nuxt-route": "^1.11.1",
-    "node-fetch-native": "^1.4.1",
-    "nuxt": "^3.8.2",
-    "nuxt-primevue": "^0.2.0",
-    "vue": "^3.3.8"
+    "node-fetch-native": "^1.6.4",
+    "nuxt": "^3.11.1",
+    "nuxt-primevue": "^0.3.1",
+    "vue": "^3.4.21"
   },
   "devDependencies": {
-    "@commitlint/cli": "^18.4.3",
-    "@commitlint/config-conventional": "^18.4.3",
-    "@noahyu/eslint-config-vue": "^1.2.3",
-    "@types/node": "^20.9.4",
+    "@commitlint/cli": "^19.2.1",
+    "@commitlint/config-conventional": "^19.1.0",
+    "@noahyu/eslint-config-vue": "^1.2.4",
+    "@types/node": "^20.12.4",
     "commitizen": "^4.3.0",
     "cross-env": "^7.0.3",
-    "cz-git": "^1.7.1",
-    "husky": "^8.0.3",
-    "lint-staged": "^15.1.0",
-    "sass": "^1.69.5",
-    "typescript": "^5.3.2"
+    "cz-git": "^1.9.1",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "sass": "^1.74.1",
+    "typescript": "^5.4.3"
   },
   "lint-staged": {
     "*.{ts,js,vue}": "eslint --fix"
