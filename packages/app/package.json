@@ -14,7 +14,7 @@
   "scripts": {
     "build": "rollup -c",
     "build:w": "rollup -c -w",
-    "changelog": "conventional-changelog -n './changelog.config.cjs' -i CHANGELOG.md -s -r 0 && pnpm prettier",
+    "changelog": "conventional-changelog -n '../../changelog.config.js' -i CHANGELOG.md -s -r 0 -k ./package.json --commit-path ./",
     "prettier": "prettier --config .prettierrc --write ./**/*.md",
     "vitest": "vitest",
     "vitest:c": "vitest run --coverage",
