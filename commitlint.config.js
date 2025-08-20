@@ -117,8 +117,8 @@ export default {
     allowEmptyScopes: true,
     scopes: [],
     scopeOverrides: {
-      feat: [{ name: 'app-cli' }],
-      fix: [{ name: 'app-cli' }],
+      feat: [{ name: 'app-cli' }, { name: 'cd-cli' }],
+      fix: [{ name: 'app-cli' }, { name: 'cd-cli' }],
     },
 
     customIssuePrefixAlign: 'top',
