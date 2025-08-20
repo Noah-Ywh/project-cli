@@ -1,0 +1,51 @@
+{
+  "name": "<%= name %>",
+  "version": "1.0.0",
+  "private": true,
+  "description": "<%= description %>",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build:test": "cross-env NUXT_ENV_MODE=test nuxt build",
+    "build:prod": "cross-env NUXT_ENV_MODE=production nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare && npx only-allow pnpm",
+    "prepare": "husky install",
+    "lint": "eslint --ext .js,.ts,.vue . --fix"
+  },
+  "keywords": ["<%= description %>"],
+  "author": "Noah Yu",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "@noahyu/nuxt-fetch": "^1.0.0",
+    "@noahyu/nuxt-route": "^1.0.0",
+    "nuxt": "latest",
+    "nuxt-primevue": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@noahyu/eslint-config-vue": "^1.4.2",
+    "@types/node": "^22.10.4",
+    "commitizen": "^4.3.1",
+    "cross-env": "^7.0.3",
+    "cz-git": "^1.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "sass": "^1.83.0",
+    "typescript": "^5.7.2"
+  },
+  "lint-staged": {
+    "*.{ts,js,vue}": "eslint --fix"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-git"
+    }
+  }
+}

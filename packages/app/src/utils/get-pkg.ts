@@ -18,14 +18,14 @@ export const getPkg = (path: string, baseUrl: string) => {
   let pkgJson
   try {
     pkgJson = fse.readFileSync(pkgPath, 'utf-8')
-  } catch (err) {
+  } catch {
     throw new Error(`The package.json file at '${pkgPath}' does not exist`)
   }
 
   let pkgObj
   try {
     pkgObj = parseJson(pkgJson)
-  } catch (err) {
+  } catch {
     throw new Error('The package.json is malformed')
   }
 

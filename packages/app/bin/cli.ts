@@ -26,7 +26,7 @@ const updateCli = async () => {
       cwd: cwd(),
     })
     latestVersion = version.stdout
-  } catch (err) {
+  } catch {
     spinner.fail('更新失败，在 npm 上找不到 @noahyu/project-cli')
     console.log(`${chalk.yellow('→')} 请自行更新在其他包管理器安装的 @noahyu/project-cli`)
     console.log(`${chalk.yellow('→')} 当前版本：${pkg.version}`)

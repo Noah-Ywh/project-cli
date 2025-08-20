@@ -12,7 +12,7 @@ export const createRobots = (env: string) => {
   try {
     accessSync('public/robots.txt', constants.F_OK)
     unlinkSync('public/robots.txt')
-  } catch (err) {
+  } catch {
     console.log('create robots.txt')
   }
   if (env === 'test') {
@@ -27,7 +27,7 @@ export const removeRobots = () => {
     accessSync('public/robots.txt', constants.F_OK)
     unlinkSync('public/robots.txt')
     console.log('remove robots.txt')
-  } catch (err) {
+  } catch {
     console.log('robots.txt does not exist')
   }
 }

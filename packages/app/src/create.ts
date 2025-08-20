@@ -20,14 +20,15 @@ async function create(projectName: string) {
 
   if (!result.validForNewPackages) {
     console.error(chalk.red(`无效的项目名称: "${FINAL_PROJECT_NAME}"`))
-    result.errors &&
-      result.errors.forEach((err) => {
-        console.error(chalk.red.dim(`Error: ${err}`))
-      })
-    result.warnings &&
-      result.warnings.forEach((warn) => {
-        console.error(chalk.red.dim(`Warning: ${warn}`))
-      })
+
+    result.errors?.forEach((err) => {
+      console.error(chalk.red.dim(`Error: ${err}`))
+    })
+
+    result.warnings?.forEach((warn) => {
+      console.error(chalk.red.dim(`Warning: ${warn}`))
+    })
+
     return
   }
 

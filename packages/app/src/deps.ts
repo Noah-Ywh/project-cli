@@ -17,7 +17,7 @@ export const deps: Deps[] = [
     name: 'sass',
     value: {
       name: 'sass',
-      version: '^1.63.6',
+      version: '^1.90.0',
       dev: true,
     },
   },

@@ -1,6 +1,6 @@
-// .commitlintrc.js
+// commitlint.config.js
 /** @type {import('cz-git').UserConfig} */
-module.exports = {
+export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     // @see: https://commitlint.js.org/#/reference-rules
@@ -117,8 +117,8 @@ module.exports = {
     allowEmptyScopes: true,
     scopes: [],
     scopeOverrides: {
-      feat: [{ name: 'cli' }, { name: 'template' }],
-      fix: [{ name: 'cli' }, { name: 'template' }],
+      feat: [{ name: 'app-cli' }],
+      fix: [{ name: 'app-cli' }],
     },
 
     customIssuePrefixAlign: 'top',
