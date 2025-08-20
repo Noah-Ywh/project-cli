@@ -12,7 +12,8 @@
     "pcli": "./dist/bin/cli.js"
   },
   "scripts": {
-    "build": "rollup -c -w",
+    "build": "rollup -c",
+    "build:w": "rollup -c -w",
     "changelog": "conventional-changelog -n './changelog.config.cjs' -i CHANGELOG.md -s -r 0 && pnpm prettier",
     "prettier": "prettier --config .prettierrc --write ./**/*.md",
     "vitest": "vitest",

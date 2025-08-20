@@ -56,7 +56,6 @@ program
       `
   Project CLI
 
-  Docs: ${chalk.cyanBright('https://projectcli.paint-js.com')}
   GitHub: ${chalk.cyanBright('https://github.com/Noah-Ywh/project-cli')}
       `,
       {

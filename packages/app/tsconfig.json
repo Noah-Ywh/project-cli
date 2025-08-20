@@ -9,6 +9,7 @@
     // "checkJs": true, // 报告 javascript 文件中的错误
     // "jsx": "preserve", // 指定 jsx 代码的生成: 'preserve', 'react-native', or 'react'
     "declaration": false, // 生成相应的 '.d.ts' 文件
+    "skipLibCheck": true, // 跳过 '.d.ts' 文件的类型检查
     // "declarationDir": "./types", // 生成的 '.d.ts' 文件保存文件夹
     // "sourceMap": true, // 生成相应的 '.map' 文件
     // "outFile": "./", // 将输出文件合并为一个文件
@@ -40,7 +41,7 @@
     // "paths": {}, // 模块名到基于 baseUrl 的路径映射的列表
     // "rootDirs": [], // 根文件夹列表，其组合内容表示项目运行时的结构内容
     // "typeRoots": [], // 包含类型声明的文件列表
-    // "types": [], // 需要包含的类型声明文件名列表
+    "types": ["node"], // 需要包含的类型声明文件名列表
     // "allowSyntheticDefaultImports": true, // 允许从没有设置默认导出的模块中默认导入。
     "esModuleInterop": true // 支持合成模块的默认导入
 
