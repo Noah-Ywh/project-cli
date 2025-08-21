@@ -110,7 +110,7 @@ export default {
     /** 私钥 */
     privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----',
     /** 私钥文件路径 */
-    privateKeyPath: '~/.ssh/id_rsa',
+    privateKeyPath: '/home/user/.ssh/id_rsa',
     /** 密码 */
     password: 'your-password',
     /** 部署目录 */
@@ -169,15 +169,11 @@ export default {
   server: {
     host: '192.168.1.100',
     username: 'root',
-    privateKeyPath: '~/.ssh/id_rsa',
+    privateKeyPath: '/home/user/.ssh/id_rsa',
     deployPath: '/var/www/app',
   },
 }
 ```
-
-- `~/.ssh/id_rsa` - 用户主目录下的私钥
-- `/home/user/.ssh/id_ed25519` - 绝对路径
-- `./keys/deploy_key` - 相对路径
 
 ### 方式三：密码认证
 
@@ -212,23 +208,23 @@ export default {
 
 ## 配置选项
 
-| 选项                    | 类型     | 必填 | 说明                               |
-| ----------------------- | -------- | ---- | ---------------------------------- |
-| `buildCommand`          | string   | 否   | 构建命令，如 "npm run build"       |
-| `buildDir`              | string   | 是   | 构建输出目录，如 ".output"         |
-| `version`               | string   | 否   | 版本号，不指定会在部署时询问       |
-| `server.host`           | string   | 是   | 服务器地址                         |
-| `server.port`           | number   | 否   | SSH 端口，默认 22                  |
-| `server.username`       | string   | 是   | 用户名                             |
-| `server.password`       | string   | 否   | SSH 密码                           |
-| `server.privateKey`     | string   | 否   | SSH 私钥内容（字符串），优先级最高 |
-| `server.privateKeyPath` | string   | 否   | SSH 私钥文件路径                   |
-| `server.deployPath`     | string   | 是   | 服务器部署路径                     |
-| `pm2.appName`           | string   | 否   | PM2 应用名称                       |
-| `pm2.restart`           | boolean  | 否   | 是否重启 PM2 应用                  |
-| `excludeFiles`          | string[] | 否   | 排除的文件模式（相对于构建目录）   |
-| `beforeDeploy`          | string[] | 否   | 部署前执行的命令                   |
-| `afterDeploy`           | string[] | 否   | 部署后执行的命令                   |
+| 选项                    | 类型     | 必填 | 说明                             |
+| ----------------------- | -------- | ---- | -------------------------------- |
+| `buildCommand`          | string   | 否   | 构建命令，如 "npm run build"     |
+| `buildDir`              | string   | 是   | 构建输出目录，如 ".output"       |
+| `version`               | string   | 否   | 版本号，不指定会在部署时询问     |
+| `server.host`           | string   | 是   | 服务器地址                       |
+| `server.port`           | number   | 否   | SSH 端口，默认 22                |
+| `server.username`       | string   | 是   | 用户名                           |
+| `server.password`       | string   | 否   | SSH 密码                         |
+| `server.privateKey`     | string   | 否   | SSH 私钥内容，优先级最高         |
+| `server.privateKeyPath` | string   | 否   | SSH 私钥文件路径                 |
+| `server.deployPath`     | string   | 是   | 服务器部署路径                   |
+| `pm2.appName`           | string   | 否   | PM2 应用名称                     |
+| `pm2.restart`           | boolean  | 否   | 是否重启 PM2 应用                |
+| `excludeFiles`          | string[] | 否   | 排除的文件模式（相对于构建目录） |
+| `beforeDeploy`          | string[] | 否   | 部署前执行的命令                 |
+| `afterDeploy`           | string[] | 否   | 部署后执行的命令                 |
 
 ## 命令详解
 
@@ -276,63 +272,6 @@ Options:
 
 ```bash
 pcli-cd init
-```
-
-## 使用场景
-
-### 1. Nuxt 3 项目部署
-
-```javascript
-// Nuxt.js 项目配置
-export default {
-  buildCommand: 'npm run build',
-  buildDir: '.output',
-  server: {
-    host: 'your-server.com',
-    username: 'root',
-    privateKeyPath: '~/.ssh/id_rsa', // 推荐使用私钥认证
-    deployPath: '/var/www/nuxt-app',
-  },
-  pm2: {
-    appName: 'nuxt-app',
-    restart: true,
-  },
-  excludeFiles: [
-    // 注意：以下路径相对于 .output 目录
-    // 请根据实际构建产物内容调整
-    'src/**', // 如果源码被复制到输出目录
-    '**/.DS_Store', // macOS 系统文件
-  ],
-}
-```
-
-### 2. Node.js API 项目部署
-
-```javascript
-// Node.js API 项目配置
-export default {
-  buildCommand: 'npm run build',
-  buildDir: 'dist',
-  server: {
-    host: 'your-server.com',
-    username: 'root',
-    privateKey: '~/.ssh/id_rsa',
-    deployPath: '/var/www/api'
-  },
-  pm2: {
-    appName: 'api-server',
-    restart: true
-  },
-  excludeFiles: [
-    // 注意：以下路径相对于 dist 目录
-    // 请根据实际构建产物内容调整
-    'src/**',         // 如果源码被复制到输出目录
-    '**/.DS_Store', // macOS 系统文件
-  ]
-  afterDeploy: [
-    'npm install --production'
-  ]
-}
 ```
 
 ## excludeFiles 配置说明
@@ -450,17 +389,17 @@ pcli-cd init
 
 ```bash
 # 检查私钥文件是否存在
-ls -la ~/.ssh/id_rsa
+ls -la /home/user/.ssh/id_rsa
 
 # 检查私钥文件权限
-chmod 600 ~/.ssh/id_rsa
+chmod 600 /home/user/.ssh/id_rsa
 ```
 
 **2. 私钥格式错误**
 
 ```bash
 # 检查私钥格式（应该以此开头）
-head -1 ~/.ssh/id_rsa
+head -1 /home/user/.ssh/id_rsa
 # RSA: -----BEGIN RSA PRIVATE KEY-----
 # OpenSSH: -----BEGIN OPENSSH PRIVATE KEY-----
 # ECDSA: -----BEGIN EC PRIVATE KEY-----
@@ -479,7 +418,7 @@ head -1 ~/.ssh/id_rsa
 ssh -p 22 root@your-server.com
 
 # 测试指定私钥连接
-ssh -i ~/.ssh/id_rsa -p 22 root@your-server.com
+ssh -i /home/user/.ssh/id_rsa -p 22 root@your-server.com
 ```
 
 ## License
