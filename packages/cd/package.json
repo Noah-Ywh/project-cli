@@ -1,6 +1,6 @@
 {
   "name": "@noahyu/cd-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Global CLI tool for simple project deployment with version management",
   "type": "module",
   "main": "./dist/bin/cli.js",
