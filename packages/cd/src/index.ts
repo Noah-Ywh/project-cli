@@ -24,10 +24,12 @@ export interface DeployConfig {
     port?: number
     /** 用户名 - 必需，SSH登录用户名，如 'root' */
     username: string
-    /** 密码 - 可选，SSH登录密码，与privateKey二选一 */
-    password?: string
-    /** 私钥路径 - 可选，SSH私钥文件路径，与password二选一，更安全 */
+    /** 私钥内容 - 可选，SSH私钥，第一优先级 */
     privateKey?: string
+    /** 私钥路径 - 可选，SSH私钥文件路径，第二优先级 */
+    privateKeyPath?: string
+    /** 密码 - 可选，SSH登录密码，第三优先级 */
+    password?: string
     /** 部署路径 - 必需，服务器上的部署目录，如 '/var/www/app' */
     deployPath: string
   }
@@ -65,6 +67,7 @@ interface RollbackOptions {
   version?: string
 }
 
+/** 部署命令 */
 export async function deployCommand(options: DeployOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
@@ -103,6 +106,7 @@ export async function deployCommand(options: DeployOptions): Promise<void> {
   await deploy(config)
 }
 
+/** 部署 */
 async function deploy(config: DeployConfig): Promise<void> {
   const spinner = ora()
   const tempDir = join(process.cwd(), '.deploy-temp')
@@ -144,15 +148,7 @@ async function deploy(config: DeployConfig): Promise<void> {
 
     // 6. 上传到服务器
     spinner.start('正在连接服务器...')
-    const ssh = new NodeSSH()
-
-    await ssh.connect({
-      host: config.server.host,
-      port: config.server.port || 22,
-      username: config.server.username,
-      password: config.server.password,
-      privateKey: config.server.privateKey,
-    })
+    const ssh = await createSSHConnection(config.server)
     spinner.succeed('服务器连接成功')
 
     // 7. 创建版本目录
@@ -261,6 +257,7 @@ async function deploy(config: DeployConfig): Promise<void> {
   }
 }
 
+/** 压缩 */
 async function createZip(
   sourcePath: string,
   outputPath: string,
@@ -285,7 +282,7 @@ async function createZip(
   })
 }
 
-// 清理旧版本函数
+/** 清理旧版本 */
 async function cleanOldVersions(
   ssh: NodeSSH,
   deployPath: string,
@@ -320,7 +317,7 @@ async function cleanOldVersions(
   }
 }
 
-// 导出初始化配置功能
+/** 初始化配置文件 */
 export async function initConfig(): Promise<void> {
   console.log(chalk.blue('🚀 初始化配置文件'))
 
@@ -356,10 +353,9 @@ export async function initConfig(): Promise<void> {
       validate: (input) => input.trim() !== '' || '请输入用户名',
     },
     {
-      type: 'password',
-      name: 'password',
-      message: '密码 (留空使用私钥):',
-      mask: '*',
+      type: 'input',
+      name: 'privateKeyPath',
+      message: '私钥路径 (留空稍后填写):',
     },
     {
       type: 'input',
@@ -381,10 +377,10 @@ export async function initConfig(): Promise<void> {
       host: answers.host,
       port: parseInt(answers.port),
       username: answers.username,
-      password: answers.password || undefined,
+      privateKeyPath: answers.privateKeyPath || undefined,
       deployPath: answers.deployPath,
     },
-    excludeFiles: [], // 空数组，让开发者根据构建产物实际情况配置
+    excludeFiles: [],
   }
 
   if (answers.pm2AppName) {
@@ -401,7 +397,7 @@ export default ${JSON.stringify(config, null, 2)}`
   console.log(chalk.green('✅ 配置文件已创建: pcli-cd.config.js'))
 }
 
-// 列出服务器上的版本
+/** 列出服务器上的版本 */
 export async function listVersions(options: ListOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
@@ -424,14 +420,7 @@ export async function listVersions(options: ListOptions): Promise<void> {
   spinner.start()
 
   try {
-    const ssh = new NodeSSH()
-    await ssh.connect({
-      host: config.server.host,
-      port: config.server.port || 22,
-      username: config.server.username,
-      password: config.server.password,
-      privateKey: config.server.privateKey,
-    })
+    const ssh = await createSSHConnection(config.server)
 
     const buildDirName = config.buildDir.split('/').pop() || 'build'
     const currentLinkPath = join(config.server.deployPath, buildDirName)
@@ -496,7 +485,7 @@ export async function listVersions(options: ListOptions): Promise<void> {
   }
 }
 
-// 回滚到指定版本
+/** 回滚到指定版本 */
 export async function rollbackVersion(options: RollbackOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
@@ -520,14 +509,7 @@ export async function rollbackVersion(options: RollbackOptions): Promise<void> {
   // 如果没有指定版本，列出版本让用户选择
   let targetVersion = options.version
   if (!targetVersion) {
-    const ssh = new NodeSSH()
-    await ssh.connect({
-      host: config.server.host,
-      port: config.server.port || 22,
-      username: config.server.username,
-      password: config.server.password,
-      privateKey: config.server.privateKey,
-    })
+    const ssh = await createSSHConnection(config.server)
 
     const result = await ssh.execCommand(
       `find ${config.server.deployPath} -maxdepth 1 -type d -name "${buildDirName}-*" | sort -V`,
@@ -571,7 +553,7 @@ export async function rollbackVersion(options: RollbackOptions): Promise<void> {
   await performRollback(config, targetVersion, buildDirName)
 }
 
-// 执行回滚操作
+/** 执行回滚操作 */
 async function performRollback(
   config: DeployConfig,
   targetVersion: string,
@@ -581,15 +563,7 @@ async function performRollback(
 
   try {
     spinner.start('正在连接服务器...')
-    const ssh = new NodeSSH()
-
-    await ssh.connect({
-      host: config.server.host,
-      port: config.server.port || 22,
-      username: config.server.username,
-      password: config.server.password,
-      privateKey: config.server.privateKey,
-    })
+    const ssh = await createSSHConnection(config.server)
     spinner.succeed('服务器连接成功')
 
     const versionDirName = `${buildDirName}-${targetVersion}`
@@ -645,5 +619,46 @@ async function performRollback(
     spinner.fail('回滚失败')
     console.error(chalk.red(`❌ 错误: ${error}`))
     process.exit(1)
+  }
+}
+
+/**
+ * 创建 SSH 连接
+ * @param server 服务器配置
+ * @returns SSH 连接实例
+ */
+async function createSSHConnection(server: DeployConfig['server']): Promise<NodeSSH> {
+  const ssh = new NodeSSH()
+
+  // 准备连接配置
+  const connectConfig: {
+    host: string
+    port: number
+    username: string
+    password?: string
+    privateKey?: string
+    privateKeyPath?: string
+  } = {
+    host: server.host,
+    port: server.port || 22,
+    username: server.username,
+  }
+
+  // 优先级：privateKey > privateKeyPath > password
+  if (server.privateKey) {
+    connectConfig.privateKey = server.privateKey
+  } else if (server.privateKeyPath) {
+    connectConfig.privateKeyPath = server.privateKeyPath
+  } else if (server.password) {
+    connectConfig.password = server.password
+  } else {
+    throw new Error('SSH 认证配置错误：必须提供 password、privateKey 或 privateKeyPath 之一')
+  }
+
+  try {
+    await ssh.connect(connectConfig)
+    return ssh
+  } catch (error: unknown) {
+    throw new Error(`SSH 连接失败: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
