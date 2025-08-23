@@ -151,6 +151,14 @@ async function deploy(config: DeployConfig): Promise<void> {
     const ssh = await createSSHConnection(config.server)
     spinner.succeed('服务器连接成功')
 
+    // 6.1. 清理残留的临时链接
+    await cleanTempLinks(ssh, config.server.deployPath, buildDirName)
+
+    // 6.2. 检查并处理已存在的部署目录
+    spinner.start('检查部署环境...')
+    await handleExistingDeployDir(ssh, config.server.deployPath, buildDirName)
+    spinner.succeed('部署环境检查完成')
+
     // 7. 创建版本目录
     const versionDirName = `${buildDirName}-${version}`
     const versionPath = join(config.server.deployPath, versionDirName)
@@ -197,12 +205,27 @@ async function deploy(config: DeployConfig): Promise<void> {
     spinner.start(`正在切换到新版本 ${version}...`)
     const tempLinkPath = `${currentLinkPath}.tmp.${Date.now()}`
 
-    // 创建临时软链接
-    await ssh.execCommand(`ln -sfn ${versionPath} ${tempLinkPath}`)
-    // 原子性移动（替换）
-    await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+    try {
+      // 创建临时软链接
+      const linkResult = await ssh.execCommand(`ln -sfn ${versionPath} ${tempLinkPath}`)
+      if (linkResult.code !== 0) {
+        throw new Error(`创建临时软链接失败: ${linkResult.stderr}`)
+      }
 
-    spinner.succeed(`版本切换完成: ${buildDirName} -> ${versionDirName}`)
+      // 原子性移动（替换）
+      const moveResult = await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+      if (moveResult.code !== 0) {
+        // 如果移动失败，清理临时链接
+        await ssh.execCommand(`rm -f ${tempLinkPath}`)
+        throw new Error(`切换软链接失败: ${moveResult.stderr}`)
+      }
+
+      spinner.succeed(`版本切换完成: ${buildDirName} -> ${versionDirName}`)
+    } catch (error) {
+      // 确保清理临时链接
+      await ssh.execCommand(`rm -f ${tempLinkPath}`)
+      throw error
+    }
 
     // 12. PM2 重启
     if (config.pm2) {
@@ -582,12 +605,27 @@ async function performRollback(
     spinner.start(`正在回滚到版本 ${targetVersion}...`)
     const tempLinkPath = `${currentLinkPath}.tmp.${Date.now()}`
 
-    // 创建临时软链接
-    await ssh.execCommand(`ln -sfn ${versionPath} ${tempLinkPath}`)
-    // 原子性移动（替换）
-    await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+    try {
+      // 创建临时软链接
+      const linkResult = await ssh.execCommand(`ln -sfn ${versionPath} ${tempLinkPath}`)
+      if (linkResult.code !== 0) {
+        throw new Error(`创建临时软链接失败: ${linkResult.stderr}`)
+      }
 
-    spinner.succeed(`回滚完成: ${buildDirName} -> ${versionDirName}`)
+      // 原子性移动（替换）
+      const moveResult = await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+      if (moveResult.code !== 0) {
+        // 如果移动失败，清理临时链接
+        await ssh.execCommand(`rm -f ${tempLinkPath}`)
+        throw new Error(`切换软链接失败: ${moveResult.stderr}`)
+      }
+
+      spinner.succeed(`回滚完成: ${buildDirName} -> ${versionDirName}`)
+    } catch (error) {
+      // 确保清理临时链接
+      await ssh.execCommand(`rm -f ${tempLinkPath}`)
+      throw error
+    }
 
     // 重启 PM2
     if (config.pm2) {
@@ -660,5 +698,96 @@ async function createSSHConnection(server: DeployConfig['server']): Promise<Node
     return ssh
   } catch (error: unknown) {
     throw new Error(`SSH 连接失败: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+/**
+ * 清理残留的临时软链接
+ * @param ssh SSH 连接
+ * @param deployPath 部署路径
+ * @param buildDirName 构建目录名
+ */
+async function cleanTempLinks(
+  ssh: NodeSSH,
+  deployPath: string,
+  buildDirName: string,
+): Promise<void> {
+  try {
+    // 查找并删除所有临时链接文件
+    await ssh.execCommand(`find ${deployPath} -name "${buildDirName}.tmp.*" -type l -delete`)
+  } catch (error) {
+    // 清理失败不影响主流程
+    console.warn(chalk.yellow(`⚠️ 清理临时链接时出现警告: ${error}`))
+  }
+}
+
+/**
+ * 检查并处理已存在的部署目录
+ * @param ssh SSH连接
+ * @param deployPath 部署路径
+ * @param buildDirName 构建目录名
+ */
+async function handleExistingDeployDir(
+  ssh: NodeSSH,
+  deployPath: string,
+  buildDirName: string,
+): Promise<void> {
+  const currentLinkPath = join(deployPath, buildDirName)
+
+  // 检查是否存在
+  const checkResult = await ssh.execCommand(`test -e ${currentLinkPath}`)
+  if (checkResult.code !== 0) {
+    // 不存在，无需处理
+    return
+  }
+
+  // 检查是否为软链接
+  const linkCheckResult = await ssh.execCommand(`test -L ${currentLinkPath}`)
+  if (linkCheckResult.code === 0) {
+    // 是软链接，正常情况
+    return
+  }
+
+  // 是目录或文件，需要处理
+  const typeResult = await ssh.execCommand(
+    `stat -c %F ${currentLinkPath} 2>/dev/null || file -b ${currentLinkPath}`,
+  )
+  const fileType = typeResult.stdout.trim()
+
+  if (fileType.includes('directory') || fileType === 'directory') {
+    // 是目录，需要备份并移除
+    const backupPath = `${currentLinkPath}.backup.${Date.now()}`
+
+    console.log(chalk.yellow(`⚠️ 检测到已存在的目录: ${currentLinkPath}`))
+    console.log(chalk.blue(`📁 将备份到: ${backupPath}`))
+
+    // 询问用户是否继续
+    const answers = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'proceed',
+        message: '是否继续部署？（已存在的目录将被备份）',
+        default: true,
+      },
+    ])
+
+    if (!answers.proceed) {
+      throw new Error('用户取消部署')
+    }
+
+    // 备份并移除
+    const backupResult = await ssh.execCommand(`mv ${currentLinkPath} ${backupPath}`)
+    if (backupResult.code !== 0) {
+      throw new Error(`备份目录失败: ${backupResult.stderr}`)
+    }
+    console.log(chalk.green(`✅ 目录已备份到: ${backupPath}`))
+  } else {
+    // 是文件，直接备份
+    const backupPath = `${currentLinkPath}.backup.${Date.now()}`
+    const backupResult = await ssh.execCommand(`mv ${currentLinkPath} ${backupPath}`)
+    if (backupResult.code !== 0) {
+      throw new Error(`备份文件失败: ${backupResult.stderr}`)
+    }
+    console.log(chalk.green(`✅ 文件已备份到: ${backupPath}`))
   }
 }
