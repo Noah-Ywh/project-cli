@@ -156,8 +156,11 @@ async function deploy(config: DeployConfig): Promise<void> {
 
     // 6.2. 检查并处理已存在的部署目录
     spinner.start('检查部署环境...')
-    await handleExistingDeployDir(ssh, config.server.deployPath, buildDirName)
-    spinner.succeed('部署环境检查完成')
+    await handleExistingDeployDir(ssh, config.server.deployPath, buildDirName, spinner)
+    // 如果没有需要处理的情况，spinner 仍在运行，所以添加 succeed
+    if (spinner.isSpinning) {
+      spinner.succeed('部署环境检查完成')
+    }
 
     // 7. 创建版本目录
     const versionDirName = `${buildDirName}-${version}`
@@ -726,11 +729,13 @@ async function cleanTempLinks(
  * @param ssh SSH连接
  * @param deployPath 部署路径
  * @param buildDirName 构建目录名
+ * @param spinner Spinner 实例，用于控制加载状态
  */
 async function handleExistingDeployDir(
   ssh: NodeSSH,
   deployPath: string,
   buildDirName: string,
+  spinner: ReturnType<typeof ora>,
 ): Promise<void> {
   const currentLinkPath = join(deployPath, buildDirName)
 
@@ -758,6 +763,8 @@ async function handleExistingDeployDir(
     // 是目录，需要备份并移除
     const backupPath = `${currentLinkPath}.backup.${Date.now()}`
 
+    // 停止 spinner 并显示信息
+    spinner.stop()
     console.log(chalk.yellow(`⚠️ 检测到已存在的目录: ${currentLinkPath}`))
     console.log(chalk.blue(`📁 将备份到: ${backupPath}`))
 
@@ -775,19 +782,32 @@ async function handleExistingDeployDir(
       throw new Error('用户取消部署')
     }
 
-    // 备份并移除
+    // 重新启动 spinner 进行备份
+    spinner.start('正在备份已存在的目录...')
     const backupResult = await ssh.execCommand(`mv ${currentLinkPath} ${backupPath}`)
     if (backupResult.code !== 0) {
       throw new Error(`备份目录失败: ${backupResult.stderr}`)
     }
+
+    spinner.stop()
     console.log(chalk.green(`✅ 目录已备份到: ${backupPath}`))
   } else {
     // 是文件，直接备份
     const backupPath = `${currentLinkPath}.backup.${Date.now()}`
+
+    // 停止 spinner 并显示信息
+    spinner.stop()
+    console.log(chalk.yellow(`⚠️ 检测到已存在的文件: ${currentLinkPath}`))
+    console.log(chalk.blue(`📁 将备份到: ${backupPath}`))
+
+    // 重新启动 spinner 进行备份
+    spinner.start('正在备份已存在的文件...')
     const backupResult = await ssh.execCommand(`mv ${currentLinkPath} ${backupPath}`)
     if (backupResult.code !== 0) {
       throw new Error(`备份文件失败: ${backupResult.stderr}`)
     }
+
+    spinner.stop()
     console.log(chalk.green(`✅ 文件已备份到: ${backupPath}`))
   }
 }
