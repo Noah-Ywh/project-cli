@@ -1,7 +1,8 @@
 import { program } from 'commander'
 import { deployCommand, initConfig, listVersions, rollbackVersion } from '../src'
+import { getVersion } from '../src/utils/get-version'
 
-program.version('1.0.0').description('Simple CI/CD deployment tool')
+program.version(getVersion(), '-v, --version').description('Simple CI/CD deployment tool')
 
 program
   .command('deploy')
