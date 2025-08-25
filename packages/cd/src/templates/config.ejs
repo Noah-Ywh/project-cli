@@ -1,0 +1,66 @@
+// pcli-cd.config.js
+
+export default {
+  apps: [
+    {
+      // 环境名称
+      name: '<%= envName %>',
+      
+      // 构建命令，部署前执行
+      buildCommand: '<%= buildCommand %>',
+      
+      // 构建输出目录
+      buildDir: '<%= buildDir %>',
+      
+      // 服务器配置
+      server: {
+        host: '<%= host %>',
+        port: <%= port %>,
+        username: '<%= username %>',<% if (privateKeyPath) { %>
+        privateKeyPath: '<%= privateKeyPath %>',<% } else { %>
+        // 私钥路径
+        // privateKeyPath: '~/.ssh/id_rsa',
+        
+        // 或者使用私钥内容
+        // privateKey: `-----BEGIN OPENSSH PRIVATE KEY-----
+        // ...
+        // -----END OPENSSH PRIVATE KEY-----`,
+        
+        // 或者使用密码
+        // password: 'your-password',<% } %>
+        deployPath: '<%= deployPath %>'
+      },<% if (pm2AppName) { %>
+      
+      // PM2 进程管理配置
+      pm2: {
+        appName: '<%= pm2AppName %>',
+        restart: true
+      },<% } else { %>
+      
+      // PM2 进程管理配置（可选）
+      // pm2: {
+      //   appName: 'my-app',
+      //   restart: true
+      // },<% } %>
+      
+      // 排除文件列表（可选）
+      excludeFiles: [
+        // 'node_modules/**',
+        // '*.log',
+        // '.env*'
+      ],
+      
+      // 部署前命令（可选）
+      // beforeDeploy: [
+      //   'npm test',
+      //   'npm run lint'
+      // ],
+      
+      // 部署后命令（可选）
+      // afterDeploy: [
+      //   'npm install --production',
+      //   'npm run migrate'
+      // ]
+    }
+  ]
+}

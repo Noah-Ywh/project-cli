@@ -7,15 +7,16 @@ import { NodeSSH } from 'node-ssh'
 import ora from 'ora'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
+import { renderConfigTemplate } from './utils/template'
 
 /** 部署配置接口 - 定义所有部署相关的配置选项 */
 export interface DeployConfig {
+  /** 环境名称 - 必需，用于标识不同的部署环境，如 'dev', 'prod', 'staging' 等 */
+  name: string
   /** 构建命令 - 可选，用于在部署前构建项目，如 'npm run build' */
   buildCommand?: string
   /** 构建输出目录 - 必需，指定构建后的文件目录，如 'dist' 或 '.output' */
   buildDir: string
-  /** 版本号 - 可选，指定部署版本，如 'v1.0.0'，不指定则在部署时询问 */
-  version?: string
   /** 服务器连接配置 - 必需，包含所有服务器连接信息 */
   server: {
     /** 服务器地址 - 必需，IP地址或域名，如 '192.168.1.100' */
@@ -47,17 +48,35 @@ export interface DeployConfig {
   /** 部署后命令 - 可选，部署后在服务器上执行的命令数组，如 ['npm install'] */
   afterDeploy?: string[]
 }
+
+/** 多环境配置接口 */
+export interface MultiEnvConfig {
+  /** 应用配置数组 - 每个元素都是一个完整的部署配置 */
+  apps: DeployConfig[]
+}
+
+/** 环境配置解析结果接口 */
+interface EnvConfigResult {
+  /** 指定的环境配置 - 如果envName为空则为null */
+  targetConfig: DeployConfig | null
+  /** 所有环境配置列表 */
+  allConfigs: DeployConfig[]
+}
 /** 部署命令选项接口 - deploy命令的参数选项 */
 interface DeployOptions {
   /** 配置文件路径 - 必需，pcli-cd.config.js文件的路径 */
   config: string
-  /** 版本号 - 可选，命令行指定的版本号，会覆盖配置文件中的版本 */
+  /** 版本号 - 可选，命令行指定的版本号 */
   version?: string
+  /** 环境名称 - 可选，指定部署环境，如 dev、prod、staging 等，不指定则交互式选择 */
+  name?: string
 }
 /** 列表命令选项接口 - list命令的参数选项 */
 interface ListOptions {
   /** 配置文件路径 - 必需，用于获取服务器连接信息 */
   config: string
+  /** 环境名称 - 可选，指定查看的环境，不指定则交互式选择 */
+  name?: string
 }
 /** 回滚命令选项接口 - rollback命令的参数选项 */
 interface RollbackOptions {
@@ -65,30 +84,36 @@ interface RollbackOptions {
   config: string
   /** 目标版本号 - 可选，要回滚到的版本，不指定则交互式选择 */
   version?: string
+  /** 环境名称 - 可选，指定回滚的环境，不指定则交互式选择 */
+  name?: string
 }
 
 /** 部署命令 */
 export async function deployCommand(options: DeployOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
-  if (!existsSync(configPath)) {
-    console.log(chalk.red(`❌ 配置文件不存在: ${configPath}`))
-    console.log(chalk.yellow('💡 请创建 pcli-cd.config.js 配置文件'))
-    process.exit(1)
-  }
+  // 读取配置文件并解析环境配置
+  const configResult = await resolveEnvConfig(configPath, options.name)
 
+  // 确定环境配置（指定或交互式选择）
   let config: DeployConfig
-  try {
-    // 支持 ES 模块和 CommonJS 两种格式
-    const configModule = await import(configPath)
-    config = configModule.default || configModule
-  } catch (error) {
-    console.log(chalk.red(`❌ 配置文件读取失败: ${error}`))
-    process.exit(1)
+
+  if (configResult.targetConfig) {
+    // 如果已经指定了环境，直接使用
+    config = configResult.targetConfig
+  } else {
+    // 如果没有指定环境，交互式选择
+    const selected = await selectEnvironmentFromConfigs(configResult.allConfigs)
+    config = selected.targetConfig
   }
 
-  // 如果没有指定版本，询问用户或自动生成
-  if (!config.version && !options.version) {
+  // 显示当前使用的环境
+  console.log(chalk.blue(`🚀 部署环境: ${chalk.bold(config.name)}`))
+  console.log(chalk.gray(`📍 部署路径: ${config.server.deployPath}`))
+
+  // 询问版本号
+  let version = options.version
+  if (!version) {
     const answers = await inquirer.prompt([
       {
         type: 'input',
@@ -98,20 +123,17 @@ export async function deployCommand(options: DeployOptions): Promise<void> {
         validate: (input) => input.trim() !== '' || '版本号不能为空',
       },
     ])
-    config.version = answers.version
-  } else {
-    config.version = options.version || config.version
+    version = answers.version
   }
 
-  await deploy(config)
+  await deploy(config, version!)
 }
 
 /** 部署 */
-async function deploy(config: DeployConfig): Promise<void> {
+async function deploy(config: DeployConfig, version: string): Promise<void> {
   const spinner = ora()
   const tempDir = join(process.cwd(), '.deploy-temp')
   const zipPath = join(tempDir, 'build.zip')
-  const version = config.version || `v${Date.now()}`
   const buildDirName = config.buildDir.split('/').pop() || 'build'
 
   try {
@@ -350,6 +372,13 @@ export async function initConfig(): Promise<void> {
   const answers = await inquirer.prompt([
     {
       type: 'input',
+      name: 'envName',
+      message: '环境名称 (如: dev, prod, staging):',
+      default: 'dev',
+      validate: (input) => input.trim() !== '' || '请输入环境名称',
+    },
+    {
+      type: 'input',
       name: 'buildCommand',
       message: '构建命令 (如: npm run build):',
       default: 'npm run build',
@@ -396,51 +425,47 @@ export async function initConfig(): Promise<void> {
     },
   ])
 
-  const config: DeployConfig = {
+  // 使用 EJS 模板渲染配置文件
+  const configContent = renderConfigTemplate({
+    envName: answers.envName,
     buildCommand: answers.buildCommand,
     buildDir: answers.buildDir,
-    server: {
-      host: answers.host,
-      port: parseInt(answers.port),
-      username: answers.username,
-      privateKeyPath: answers.privateKeyPath || undefined,
-      deployPath: answers.deployPath,
-    },
-    excludeFiles: [],
-  }
-
-  if (answers.pm2AppName) {
-    config.pm2 = {
-      appName: answers.pm2AppName,
-      restart: true,
-    }
-  }
-
-  const configContent = `// pcli-cd 部署配置文件
-export default ${JSON.stringify(config, null, 2)}`
+    host: answers.host,
+    port: answers.port,
+    username: answers.username,
+    privateKeyPath: answers.privateKeyPath || undefined,
+    deployPath: answers.deployPath,
+    pm2AppName: answers.pm2AppName || undefined,
+  })
 
   await fse.writeFile('pcli-cd.config.js', configContent)
   console.log(chalk.green('✅ 配置文件已创建: pcli-cd.config.js'))
+  console.log(chalk.blue(`📝 默认环境: ${answers.envName}`))
+  console.log(chalk.gray('💡 可以在 apps 数组中添加更多环境配置'))
+  console.log(chalk.gray('💡 配置文件包含详细的注释说明'))
 }
 
 /** 列出服务器上的版本 */
 export async function listVersions(options: ListOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
-  if (!existsSync(configPath)) {
-    console.log(chalk.red(`❌ 配置文件不存在: ${configPath}`))
-    process.exit(1)
+  // 读取配置文件并解析环境配置
+  const configResult = await resolveEnvConfig(configPath, options.name)
+
+  // 确定环境名称和配置（指定或交互式选择）
+  let config: DeployConfig
+
+  if (configResult.targetConfig) {
+    // 如果已经指定了环境，直接使用
+    config = configResult.targetConfig
+  } else {
+    // 如果没有指定环境，交互式选择
+    const selected = await selectEnvironmentFromConfigs(configResult.allConfigs)
+    config = selected.targetConfig
   }
 
-  let config: DeployConfig
-  try {
-    // 支持 ES 模块和 CommonJS 两种格式
-    const configModule = await import(configPath)
-    config = configModule.default || configModule
-  } catch (error) {
-    console.log(chalk.red(`❌ 配置文件读取失败: ${error}`))
-    process.exit(1)
-  }
+  // 显示当前查看的环境
+  console.log(chalk.blue(`🔍 查看环境: ${chalk.bold(config.name)}`))
 
   const spinner = ora('正在获取版本列表...')
   spinner.start()
@@ -515,20 +540,23 @@ export async function listVersions(options: ListOptions): Promise<void> {
 export async function rollbackVersion(options: RollbackOptions): Promise<void> {
   const configPath = resolve(process.cwd(), options.config)
 
-  if (!existsSync(configPath)) {
-    console.log(chalk.red(`❌ 配置文件不存在: ${configPath}`))
-    process.exit(1)
+  // 读取配置文件并解析环境配置
+  const configResult = await resolveEnvConfig(configPath, options.name)
+
+  // 确定环境名称和配置（指定或交互式选择）
+  let config: DeployConfig
+
+  if (configResult.targetConfig) {
+    // 如果已经指定了环境，直接使用
+    config = configResult.targetConfig
+  } else {
+    // 如果没有指定环境，交互式选择
+    const selected = await selectEnvironmentFromConfigs(configResult.allConfigs)
+    config = selected.targetConfig
   }
 
-  let config: DeployConfig
-  try {
-    // 支持 ES 模块和 CommonJS 两种格式
-    const configModule = await import(configPath)
-    config = configModule.default || configModule
-  } catch (error) {
-    console.log(chalk.red(`❌ 配置文件读取失败: ${error}`))
-    process.exit(1)
-  }
+  // 显示当前回滚的环境
+  console.log(chalk.blue(`⏪ 回滚环境: ${chalk.bold(config.name)}`))
 
   const buildDirName = config.buildDir.split('/').pop() || 'build'
 
@@ -660,6 +688,111 @@ async function performRollback(
     spinner.fail('回滚失败')
     console.error(chalk.red(`❌ 错误: ${error}`))
     process.exit(1)
+  }
+}
+
+/**
+ * 读取配置文件并解析环境配置
+ * @param configPath 配置文件路径
+ * @param envName 环境名称，可选
+ * @returns 解析结果，包含目标配置和所有配置
+ */
+async function resolveEnvConfig(configPath: string, envName?: string): Promise<EnvConfigResult> {
+  // 检查配置文件是否存在
+  if (!existsSync(configPath)) {
+    console.log(chalk.red(`❌ 配置文件不存在: ${configPath}`))
+    console.log(chalk.yellow('💡 请创建 pcli-cd.config.js 配置文件'))
+    process.exit(1)
+  }
+
+  // 读取并解析配置文件
+  let rawConfig: MultiEnvConfig
+  try {
+    // 支持 ES 模块和 CommonJS 两种格式
+    const configModule = await import(configPath)
+    rawConfig = configModule.default || configModule
+  } catch (error) {
+    console.log(chalk.red(`❌ 配置文件读取失败: ${error}`))
+    process.exit(1)
+  }
+
+  // 检查配置文件格式
+  if (!rawConfig.apps || !Array.isArray(rawConfig.apps)) {
+    console.log(chalk.red('❌ 配置文件格式错误：缺少 apps 数组'))
+    console.log(chalk.yellow('💡 配置文件应该包含一个 apps 数组，每个元素都是一个环境配置'))
+    process.exit(1)
+  }
+
+  if (rawConfig.apps.length === 0) {
+    console.log(chalk.red('❌ 配置文件中没有任何环境配置'))
+    console.log(chalk.yellow('💡 请在 apps 数组中添加至少一个环境配置'))
+    process.exit(1)
+  }
+
+  // 如果没有指定环境名称，返回所有配置，targetConfig为null
+  if (!envName) {
+    return {
+      targetConfig: null,
+      allConfigs: rawConfig.apps,
+    }
+  }
+
+  // 查找指定的环境配置
+  const envConfig = rawConfig.apps.find((app) => app.name === envName)
+  if (!envConfig) {
+    console.log(chalk.red(`❌ 环境配置 "${envName}" 不存在`))
+    console.log(chalk.yellow('💡 可用的环境配置:'))
+
+    rawConfig.apps.forEach((app) => {
+      console.log(chalk.gray(`   - ${app.name}`))
+    })
+
+    process.exit(1)
+  }
+
+  return {
+    targetConfig: envConfig,
+    allConfigs: rawConfig.apps,
+  }
+}
+
+/**
+ * 交互式选择环境并返回环境配置
+ * @param allConfigs 所有环境配置
+ * @returns 选择的环境名称和对应的配置
+ */
+async function selectEnvironmentFromConfigs(allConfigs: DeployConfig[]): Promise<{
+  envName: string
+  targetConfig: DeployConfig
+}> {
+  // 如果只有一个环境，直接返回
+  if (allConfigs.length === 1) {
+    return {
+      envName: allConfigs[0].name,
+      targetConfig: allConfigs[0],
+    }
+  }
+
+  // 交互式选择环境
+  const envChoices = allConfigs.map((app) => ({
+    name: `${app.name} (${app.server.host})`,
+    value: app.name,
+  }))
+
+  const answers = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'envName',
+      message: '请选择环境:',
+      choices: envChoices,
+    },
+  ])
+
+  const selectedConfig = allConfigs.find((app) => app.name === answers.envName)!
+
+  return {
+    envName: answers.envName,
+    targetConfig: selectedConfig,
   }
 }
 
