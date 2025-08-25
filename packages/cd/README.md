@@ -1,6 +1,6 @@
-# 简易项目部署工具
+# 简易的项目部署工具
 
-一个简易的部署工具，支持版本管理和零停机部署。
+> 一个简易的部署工具，支持版本管理和零停机部署。
 
 ## 功能特性
 
@@ -35,7 +35,8 @@ pcli-cd init
 
 这会在项目根目录创建 `pcli-cd.config.js` 配置文件。
 
-- **重要** `pcli-cd.config.js` 文件不应该提交到 Git
+> [!WARNING]
+> `pcli-cd.config.js` 配置文件存在敏感信息，不应该提交到 Git
 
 ### 2. 部署项目
 
@@ -87,7 +88,8 @@ PM2 配置始终指向软链接 `.output/server/index.mjs`，这样切换版本�
 
 配置文件 `pcli-cd.config.js` 示例：
 
-> **重要** `pcli-cd.config.js` 文件不应该提交到 Git
+> [!WARNING]
+> `pcli-cd.config.js` 配置文件存在敏感信息，不应该提交到 Git
 
 ```javascript
 // pcli-cd 部署配置文件
@@ -106,13 +108,10 @@ export default {
     port: 22,
     /** 用户名 */
     username: 'root',
-    // SSH 认证方式（优先级：privateKey > privateKeyPath > password）
-    /** 私钥 */
-    privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----',
-    /** 私钥文件路径 */
-    privateKeyPath: '/home/user/.ssh/id_rsa',
-    /** 密码 */
-    password: 'your-password',
+    /** SSH 认证方式（优先级：privateKey > privateKeyPath > password） */
+    privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----', // 私钥
+    privateKeyPath: '/home/user/.ssh/id_rsa', // 私钥文件路径
+    password: 'your-password', // 密码
     /** 部署目录 */
     deployPath: '/var/www/your-app',
   },
@@ -344,7 +343,8 @@ pcli-cd rollback
 
 每个项目只需要一个 `pcli-cd.config.js` 配置文件，工具会自动读取当前目录下的配置。
 
-⚠️ **重要提醒** `pcli-cd.config.js` 文件不应该提交到 Git
+> [!WARNING]
+> `pcli-cd.config.js` 配置文件存在敏感信息，不应该提交到 Git
 
 ## 注意事项
 
@@ -420,7 +420,3 @@ ssh -p 22 root@your-server.com
 # 测试指定私钥连接
 ssh -i /home/user/.ssh/id_rsa -p 22 root@your-server.com
 ```
-
-## License
-
-MIT

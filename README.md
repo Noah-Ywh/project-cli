@@ -1,6 +1,10 @@
-# project-cli
+# Project CLI
+
+> 简易的项目管理 CLI
 
 ## 初始化项目
+
+> 用于初始化一个空白项目
 
 ### 安装
 
@@ -15,6 +19,8 @@ pcli create <app-name>
 ```
 
 ## 项目部署
+
+> 用于本地打包后上传至服务器
 
 ### 安装
 
@@ -33,7 +39,8 @@ pcli-cd init
 
 这会在项目根目录创建 `pcli-cd.config.js` 配置文件。
 
-- **重要** `pcli-cd.config.js` 文件不应该提交到 Git
+> [!WARNING]
+> `pcli-cd.config.js` 配置文件存在敏感信息，不应该提交到 Git
 
 #### 部署项目
 

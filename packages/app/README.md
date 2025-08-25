@@ -1,21 +1,13 @@
-# project-cli
+# 快速创建一个空白的项目
 
-> Helps you quickly create out-of-the-box projects
-
-## Usage
+## 安装
 
 ```bash
 npm install @noahyu/project-cli -g
 ```
 
-## Quick start
+## 快速开始
 
 ```bash
 pcli create <app-name>
 ```
-
-## License
-
-[MIT](https://opensource.org/licenses/MIT)
-
-Copyright (c) 2023-present, Noah Yu
