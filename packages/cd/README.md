@@ -38,6 +38,26 @@ pcli-cd init
 > [!WARNING]
 > `pcli-cd.config.js` 配置文件存在敏感信息，不应该提交到 Git
 
+#### 配置选项
+
+| 选项                    | 类型     | 必填 | 说明                             |
+| ----------------------- | -------- | ---- | -------------------------------- |
+| `name`                  | string   | 是   | 环境名称                         |
+| `buildCommand`          | string   | 否   | 构建命令，如 "npm run build"     |
+| `buildDir`              | string   | 是   | 构建输出目录，如 ".output"       |
+| `server.host`           | string   | 是   | 服务器地址                       |
+| `server.port`           | number   | 否   | 端口，默认 22                    |
+| `server.username`       | string   | 是   | 用户名                           |
+| `server.privateKey`     | string   | 否   | 私钥内容，优先级最高             |
+| `server.privateKeyPath` | string   | 否   | 私钥文件路径                     |
+| `server.password`       | string   | 否   | 密码                             |
+| `server.deployPath`     | string   | 是   | 服务器部署路径                   |
+| `pm2.appName`           | string   | 否   | PM2 应用名称                     |
+| `pm2.restart`           | boolean  | 否   | 是否重启 PM2 应用                |
+| `excludeFiles`          | string[] | 否   | 排除的文件模式（相对于构建目录） |
+| `beforeDeploy`          | string[] | 否   | 部署前执行的命令                 |
+| `afterDeploy`           | string[] | 否   | 部署后执行的命令                 |
+
 ### 2. 部署项目
 
 ```bash
@@ -94,49 +114,54 @@ PM2 配置始终指向软链接 `.output/server/index.mjs`，这样切换版本�
 ```javascript
 // pcli-cd 部署配置文件
 export default {
-  /** 构建命令 (可选)：构建项目 */
-  buildCommand: 'npm run build',
-  /** 构建输出目录 */
-  buildDir: '.output',
-  /** 版本号 (可选，不指定会在部署时询问) */
-  version: 'v1.0.0',
-  /** 服务器配置 */
-  server: {
-    /** 服务器地址 */
-    host: '192.168.1.100',
-    /** 端口号 */
-    port: 22,
-    /** 用户名 */
-    username: 'root',
-    /** SSH 认证方式（优先级：privateKey > privateKeyPath > password） */
-    privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----', // 私钥
-    privateKeyPath: '/home/user/.ssh/id_rsa', // 私钥文件路径
-    password: 'your-password', // 密码
-    /** 部署目录 */
-    deployPath: '/var/www/your-app',
-  },
-  /** PM2 配置 (可选) */
-  pm2: {
-    /** 进程名称 */
-    appName: 'your-app-name',
-    /** 是否立即重启 */
-    restart: true,
-  },
+  apps: [
+    {
+      name: 'prod',
+      /** 构建命令 (可选)：构建项目 */
+      buildCommand: 'npm run build',
+      /** 构建输出目录 */
+      buildDir: '.output',
+      /** 版本号 (可选，不指定会在部署时询问) */
+      version: 'v1.0.0',
+      /** 服务器配置 */
+      server: {
+        /** 服务器地址 */
+        host: '192.168.1.100',
+        /** 端口号 */
+        port: 22,
+        /** 用户名 */
+        username: 'root',
+        /** SSH 认证方式（优先级：privateKey > privateKeyPath > password） */
+        privateKey: '-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----', // 私钥
+        privateKeyPath: '/home/user/.ssh/id_rsa', // 私钥文件路径
+        password: 'your-password', // 密码
+        /** 部署目录 */
+        deployPath: '/var/www/your-app',
+      },
+      /** PM2 配置 (可选) */
+      pm2: {
+        /** 进程名称 */
+        appName: 'your-app-name',
+        /** 是否立即重启 */
+        restart: true,
+      },
 
-  /**
-   * 排除的文件 (可选) - 作用于构建产物目录
-   *
-   * 请根据构建输出的实际内容谨慎配置
-   */
-  excludeFiles: [
-    // '**/*.map',        // Source Map 文件
-    // '**/.DS_Store',    // macOS 系统文件
-    // '**/Thumbs.db'     // Windows 缩略图缓存
+      /**
+       * 排除的文件 (可选) - 作用于构建产物目录
+       *
+       * 请根据构建输出的实际内容谨慎配置
+       */
+      excludeFiles: [
+        // '**/*.map',        // Source Map 文件
+        // '**/.DS_Store',    // macOS 系统文件
+        // '**/Thumbs.db'     // Windows 缩略图缓存
+      ],
+      /** 部署前命令 (可选) */
+      beforeDeploy: ['npm run test'],
+      /** 部署后命令 (可选) */
+      afterDeploy: ['npm install --production'],
+    },
   ],
-  /** 部署前命令 (可选) */
-  beforeDeploy: ['npm run test'],
-  /** 部署后命令 (可选) */
-  afterDeploy: ['npm install --production'],
 }
 ```
 
@@ -150,12 +175,18 @@ export default {
 
 ```javascript
 export default {
-  server: {
-    host: '192.168.1.100',
-    username: 'root',
-    privateKey: process.env.SSH_PRIVATE_KEY, // 从环境变量读取
-    deployPath: '/var/www/app',
-  },
+  apps: [
+    {
+      name: 'prod',
+      server: {
+        host: '192.168.1.100',
+        username: 'root',
+        privateKey: process.env.SSH_PRIVATE_KEY, // 从环境变量读取
+        deployPath: '/var/www/app',
+      },
+      // ···
+    },
+  ],
 }
 ```
 
@@ -165,12 +196,18 @@ export default {
 
 ```javascript
 export default {
-  server: {
-    host: '192.168.1.100',
-    username: 'root',
-    privateKeyPath: '/home/user/.ssh/id_rsa',
-    deployPath: '/var/www/app',
-  },
+  apps: [
+    {
+      name: 'dev',
+      server: {
+        host: '192.168.1.100',
+        username: 'root',
+        privateKeyPath: '/home/user/.ssh/id_rsa',
+        deployPath: '/var/www/app',
+      },
+      // ···
+    },
+  ],
 }
 ```
 
@@ -180,12 +217,18 @@ export default {
 
 ```javascript
 export default {
-  server: {
-    host: '192.168.1.100',
-    username: 'root',
-    password: 'your-password',
-    deployPath: '/var/www/app',
-  },
+  apps: [
+    {
+      name: 'test',
+      server: {
+        host: '192.168.1.100',
+        username: 'root',
+        password: 'your-password',
+        deployPath: '/var/www/app',
+      },
+      // ···
+    },
+  ],
 }
 ```
 
@@ -205,26 +248,6 @@ export default {
 - ⚠️ **测试环境**：可以使用密码认证
 - ❌ **避免**：在配置文件中硬编码密码或私钥内容
 
-## 配置选项
-
-| 选项                    | 类型     | 必填 | 说明                             |
-| ----------------------- | -------- | ---- | -------------------------------- |
-| `buildCommand`          | string   | 否   | 构建命令，如 "npm run build"     |
-| `buildDir`              | string   | 是   | 构建输出目录，如 ".output"       |
-| `version`               | string   | 否   | 版本号，不指定会在部署时询问     |
-| `server.host`           | string   | 是   | 服务器地址                       |
-| `server.port`           | number   | 否   | SSH 端口，默认 22                |
-| `server.username`       | string   | 是   | 用户名                           |
-| `server.password`       | string   | 否   | SSH 密码                         |
-| `server.privateKey`     | string   | 否   | SSH 私钥内容，优先级最高         |
-| `server.privateKeyPath` | string   | 否   | SSH 私钥文件路径                 |
-| `server.deployPath`     | string   | 是   | 服务器部署路径                   |
-| `pm2.appName`           | string   | 否   | PM2 应用名称                     |
-| `pm2.restart`           | boolean  | 否   | 是否重启 PM2 应用                |
-| `excludeFiles`          | string[] | 否   | 排除的文件模式（相对于构建目录） |
-| `beforeDeploy`          | string[] | 否   | 部署前执行的命令                 |
-| `afterDeploy`           | string[] | 否   | 部署后执行的命令                 |
-
 ## 命令详解
 
 ### deploy (cd)
@@ -236,6 +259,7 @@ pcli-cd deploy [options]
 
 Options:
   -c, --config <config>    配置文件路径 (默认: ./pcli-cd.config.js)
+  -n, --name <name>        指定环境名称
   -v, --version <version>  指定版本号
   -h, --help              显示帮助信息
 ```
@@ -249,6 +273,7 @@ pcli-cd list [options]
 
 Options:
   -c, --config <config>    配置文件路径 (默认: ./pcli-cd.config.js)
+  -n, --name <name>        指定环境名称
   -h, --help              显示帮助信息
 ```
 
@@ -261,6 +286,7 @@ pcli-cd rollback [options]
 
 Options:
   -c, --config <config>    配置文件路径 (默认: ./pcli-cd.config.js)
+  -n, --name <name>        指定环境名称
   -v, --version <version>  回滚到的版本号
   -h, --help              显示帮助信息
 ```
@@ -282,30 +308,6 @@ pcli-cd init
 1. 首先执行 `buildCommand` 生成构建产物到 `buildDir`
 2. 然后对 `buildDir` 目录进行压缩，此时应用 `excludeFiles` 规则
 3. 将压缩包上传到服务器
-
-### 配置建议
-
-```javascript
-// ❌ 错误理解：认为排除的是项目根目录文件
-export default {
-  excludeFiles: ['src/**', 'node_modules/**']
-}
-
-// ✅ 正确理解：排除的是构建目录内的文件
-export default {
-  excludeFiles: [
-    // 只有当这些文件确实出现在构建目录中，且确认不需要时才排除
-    '**/*.map',        // Source Map 文件（通常不需要）
-    '**/.DS_Store',    // macOS 系统文件
-    '**/Thumbs.db'     // Windows 缩略图缓存
-  ]
-}
-```
-
-### 注意事项
-
-- **运行时依赖**：某些框架（如 Nuxt、Next.js）的构建产物可能包含必需的 `node_modules`
-- **建议**：初次使用时保持 `excludeFiles: []`，观察构建产物内容后再配置
 
 ## 版本管理
 
