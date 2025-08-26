@@ -238,7 +238,7 @@ async function deploy(config: DeployConfig, version: string): Promise<void> {
       }
 
       // 原子性移动（替换）
-      const moveResult = await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+      const moveResult = await ssh.execCommand(`mv -T ${tempLinkPath} ${currentLinkPath}`)
       if (moveResult.code !== 0) {
         // 如果移动失败，清理临时链接
         await ssh.execCommand(`rm -f ${tempLinkPath}`)
@@ -644,7 +644,7 @@ async function performRollback(
       }
 
       // 原子性移动（替换）
-      const moveResult = await ssh.execCommand(`mv ${tempLinkPath} ${currentLinkPath}`)
+      const moveResult = await ssh.execCommand(`mv -T ${tempLinkPath} ${currentLinkPath}`)
       if (moveResult.code !== 0) {
         // 如果移动失败，清理临时链接
         await ssh.execCommand(`rm -f ${tempLinkPath}`)
