@@ -1,7 +1,5 @@
 import fse from 'fs-extra'
 import parseJson from 'parse-json'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 
 type PackageJson = {
   name?: string
@@ -10,10 +8,8 @@ type PackageJson = {
 }
 
 /** 获取版本号 */
-export function getVersion() {
-  const __filename = fileURLToPath(import.meta.url)
-  const __dirname = dirname(__filename)
-  const packageJsonPath = join(__dirname, '../../package.json')
+export function getVersion(path: string, baseUrl: string) {
+  const packageJsonPath = new URL(path, baseUrl)
 
   let packageJsonContent: string
   try {
@@ -24,7 +20,7 @@ export function getVersion() {
 
   let packageData: PackageJson
   try {
-    packageData = parseJson(packageJsonContent) as PackageJson
+    packageData = parseJson(packageJsonContent)
   } catch {
     throw new Error('package.json 文件格式错误，请检查 JSON 语法')
   }

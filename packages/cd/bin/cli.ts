@@ -2,7 +2,9 @@ import { program } from 'commander'
 import { deployCommand, initConfig, listVersions, rollbackVersion } from '../src'
 import { getVersion } from '../src/utils/get-version'
 
-program.version(getVersion(), '-v, --version').description('Simple CI/CD deployment tool')
+program
+  .version(getVersion('../../package.json', import.meta.url), '-v, --version')
+  .description('Simple CI/CD deployment tool')
 
 program
   .command('deploy')
