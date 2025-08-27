@@ -56,7 +56,7 @@ program
       `
   Project CLI
 
-  GitHub: ${chalk.cyanBright('https://github.com/Noah-Ywh/project-cli')}
+  GitHub: ${chalk.cyanBright('https://github.com/noahyu4882/project-cli')}
       `,
       {
         borderColor: '#0bc39d',
